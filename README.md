@@ -25,36 +25,58 @@ The platform follows a decoupled architecture where the Next.js frontend communi
 
 ## Getting Started
 
-### Starting the Backend Locally
-
-To run the FastAPI backend locally, execute the following commands from the project root:
-
-```bash
-cd backend
-
-# Create environment — normally ek baar
-python3 -m venv .venv
-
-# Activate environment
-source .venv/bin/activate
-
-# Install project dependencies
-python -m pip install -r requirement.txt
-
-# Run the backend
-uvicorn app.main:app --reload
-```
-
 ### Prerequisites
 
 *   Docker and Docker Compose
-*   Node.js
-*   Python 3.x
+*   Node.js (for local client development)
+*   Python 3.11+ (for local backend development)
 
-### Installation
+### Running with Docker Compose (Recommended)
 
-1. Clone the repository.
-2. Install frontend dependencies.
-3. Install backend dependencies.
-4. Run database migrations.
-5. Start the frontend and backend servers.
+The easiest way to run the entire RetainIQ stack (Frontend, Backend, and MySQL) is using Docker Compose:
+
+```bash
+# Build and start all services in the background
+docker compose up -d --build
+```
+
+Once running, the services will be available at:
+*   **Frontend Client:** http://localhost:3000
+*   **Backend API (Swagger Docs):** http://localhost:8000/docs
+*   **MySQL Database:** `localhost:3307` (Internal network: `mysql:3306`)
+
+To stop the services:
+```bash
+docker compose down
+```
+
+### Local Development Setup
+
+If you prefer to run the services individually on your host machine or need to install dependencies for your IDE:
+
+#### 1. Setup Pre-commit Hooks (Required)
+We use `pre-commit` to enforce code quality (like Ruff linting) before each commit.
+```bash
+pip install pre-commit
+pre-commit install
+```
+
+#### 2. Backend Setup
+```bash
+cd backend
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirement.txt
+uvicorn app.main:app --reload
+```
+
+#### 3. Frontend Client Setup
+```bash
+cd client
+npm install
+npm run dev
+```
+
+## Documentation
+
+* [Database Schema & ER Diagram](docs/database-schema.md)

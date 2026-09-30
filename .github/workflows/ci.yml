@@ -18,10 +18,10 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install ruff
-      - name: Lint with ruff
+          pip install pre-commit
+      - name: Run pre-commit
         run: |
-          ruff check backend/
+          pre-commit run --all-files
 
   lint-client:
     runs-on: ubuntu-latest
