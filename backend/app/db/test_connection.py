@@ -1,6 +1,5 @@
-from sqlalchemy import create_engine, text
-
 from app.core.config import settings
+from sqlalchemy import create_engine, text
 
 engine = create_engine(
     settings.database_url,
@@ -14,7 +13,7 @@ try:
         print("Database connection successful!")
         print("Query result:", result.scalar())
 
-except Exception as error:
+except Exception as error:  
     print("Database connection failed!")
     print("Error:", error)
 
