@@ -25,7 +25,25 @@ The platform follows a decoupled architecture where the Next.js frontend communi
 
 ## Getting Started
 
-*(Add setup instructions, environment variables, and run commands here once the project structure is fully initialized.)*
+### Starting the Backend Locally
+
+To run the FastAPI backend locally, execute the following commands from the project root:
+
+```bash
+cd backend
+
+# Create environment — normally ek baar
+python3 -m venv .venv
+
+# Activate environment
+source .venv/bin/activate
+
+# Install project dependencies
+python -m pip install -r requirement.txt
+
+# Run the backend
+uvicorn app.main:app --reload
+```
 
 ### Prerequisites
 
