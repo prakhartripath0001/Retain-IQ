@@ -1,11 +1,30 @@
 
+# ── Web Framework ──────────────────────────────────────────────────────────
 fastapi
 uvicorn[standard]
+
+# ── Configuration & Environment ────────────────────────────────────────────
 pydantic-settings
 python-dotenv
+
+# ── Database ───────────────────────────────────────────────────────────────
 sqlalchemy
 pymysql
 alembic
+
+# ── Data Science & EDA ─────────────────────────────────────────────────────
+pandas
+numpy
+matplotlib
+seaborn
+
+# ── Testing ────────────────────────────────────────────────────────────────
 pytest
 httpx
-pandas
+
+# ── Dashboard ──────────────────────────────────────────────────────────────
+streamlit
+plotly
+
+# ── Machine Learning ───────────────────────────────────────────────────────
+scikit-learn

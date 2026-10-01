@@ -59,6 +59,7 @@ def random_date(start: datetime, days: int) -> datetime:
 
 def main() -> None:
     start_date = datetime(2024, 1, 1)
+    date_range_days = 550  # spans Jan 2024 → Jun 2025
 
     with engine.begin() as conn:
         # ── Clear existing data (child → parent order) ──────────────────
@@ -73,7 +74,7 @@ def main() -> None:
         for i, name in enumerate(FIRST_NAMES, start=1):
             email = f"{name.lower()}.{i}@example.com"
             phone = f"555-{i:04d}"
-            created = random_date(start_date, 365)
+            created = random_date(start_date, date_range_days)
             conn.execute(
                 text(
                     "INSERT INTO customers (id, name, email, phone, created_at) "
@@ -109,7 +110,7 @@ def main() -> None:
             num_orders = random.randint(1, 8)
             for _ in range(num_orders):
                 status = random.choice(STATUSES)
-                order_date = random_date(start_date, 365)
+                order_date = random_date(start_date, date_range_days)
 
                 # Each order has 1–4 items
                 num_items = random.randint(1, 4)

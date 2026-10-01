@@ -92,8 +92,41 @@ python scripts/load_data.py
 
 This script will validate the CSV schema, clean the records, handle duplicates, upload valid records to MySQL, and output any rejected rows to `data/processed/` for auditing.
 
+### Data Science Pipeline
+
+After data is loaded into MySQL, run the full data science pipeline from the project root:
+
+```bash
+source backend/.venv/bin/activate
+
+# Seed realistic sample data (optional — resets all tables)
+python scripts/seed_sample_data.py
+
+# Exploratory Data Analysis — generates charts and CSV reports in reports/eda/
+python scripts/eda.py
+
+# RFM Analysis — scores each customer on Recency, Frequency, Monetary
+python scripts/rfm_analysis.py
+
+# Customer Segmentation — K-Means clustering, outputs to reports/segmentation/
+python scripts/segment_customers.py
+
+# Launch the interactive segmentation dashboard
+streamlit run dashboard/app.py
+
+# Churn Label Generation — define observation date and generate ML target labels
+export CHURN_SNAPSHOT_DATE="2025-01-01"
+export CHURN_DATA_THROUGH_DATE="2025-04-01"
+python scripts/generate_churn_labels.py
+```
+
+The dashboard will open at `http://localhost:8501`.
+
+The churn labels will be saved to `reports/churn/churn_labels.csv`.
+
 ## Documentation
 
 * [Database Schema & ER Diagram](docs/database-schema.md)
 * [Data Pipeline — Cleaning & Ingestion](docs/data-pipeline.md)
-
+* [Data Science — EDA, RFM & Segmentation](docs/data-science.md)
+* [Churn Definition & Label Generation](docs/churn-labels.md)
