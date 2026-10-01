@@ -77,6 +77,22 @@ npm install
 npm run dev
 ```
 
+### Data Ingestion
+
+To load sample data into your MySQL database (with built-in validation and cleaning), use the provided data ingestion pipeline:
+
+1. Ensure your MySQL database is running and the schema is applied.
+2. Ensure your raw CSV files (e.g., `customers.csv`) are located in `data/raw/`.
+3. Activate the backend virtual environment and run the script from the project root:
+
+```bash
+source backend/.venv/bin/activate
+python scripts/load_data.py
+```
+
+This script will validate the CSV schema, clean the records, handle duplicates, upload valid records to MySQL, and output any rejected rows to `data/processed/` for auditing.
+
 ## Documentation
 
 * [Database Schema & ER Diagram](docs/database-schema.md)
+

@@ -4,6 +4,8 @@ class Base(DeclarativeBase):
     pass
 
 from app.models.customer import Customer
+from app.models.order import Order
+from app.models.review import Review
 from app.models.customer_feature import CustomerFeature
 from app.models.customer_segment import CustomerSegment
 from app.models.model_version import ModelVersion

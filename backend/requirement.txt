@@ -8,3 +8,4 @@ pymysql
 alembic
 pytest
 httpx
+pandas
