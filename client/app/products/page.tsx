@@ -10,7 +10,7 @@ interface Product {
   name: string;
   description?: string | null;
   price: number;
-  stock_quantity: int;
+  stock_quantity: number;
   created_at?: string;
 }
 
