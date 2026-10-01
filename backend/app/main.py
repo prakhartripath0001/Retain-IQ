@@ -2,7 +2,17 @@ from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
-from app.api.routes import analytics, auth, customers, health, orders, payments, products, reviews
+from app.api.routes import (
+    analytics,
+    auth,
+    customers,
+    health,
+    orders,
+    payments,
+    predictions,
+    products,
+    reviews,
+)
 
 app = FastAPI(
     title="RetainIQ API",
@@ -34,6 +44,10 @@ app.include_router(
 )
 app.include_router(
     reviews.router,
+    prefix="/api/v1",
+)
+app.include_router(
+    predictions.router,
     prefix="/api/v1",
 )
 app.include_router(
