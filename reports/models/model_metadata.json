@@ -1,0 +1,26 @@
+{
+  "selected_model": "Logistic Regression",
+  "selection_metric": "validation_pr_auc",
+  "decision_threshold": 0.5,
+  "feature_columns": [
+    "days_since_last_order",
+    "total_orders",
+    "total_spending",
+    "average_order_value",
+    "orders_last_30_days",
+    "orders_last_90_days",
+    "spending_last_30_days",
+    "spending_last_90_days",
+    "return_rate",
+    "average_review_score",
+    "discount_usage"
+  ],
+  "target": "churn",
+  "target_definition": "No qualifying purchase in next 90 days",
+  "snapshot_date": "2025-01-01",
+  "random_state": 42,
+  "training_rows": 24,
+  "validation_rows": 9,
+  "test_rows": 9,
+  "note": "Test metrics are for the pre-refit candidate models. Threshold 0.5 is a baseline, not an optimized business threshold."
+}

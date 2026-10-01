@@ -1,0 +1,3 @@
+model,test_precision,test_recall,test_f1,test_roc_auc,test_pr_auc,threshold,true_negative,false_positive,false_negative,true_positive,selected_by_validation
+Logistic Regression,0.5,0.2,0.2857142857142857,0.5,0.6087301587301588,0.5,3,1,4,1,True
+Random Forest,0.6666666666666666,0.8,0.7272727272727273,0.55,0.6977777777777778,0.5,2,2,1,4,False

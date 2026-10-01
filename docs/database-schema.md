@@ -6,12 +6,19 @@ This document provides the Entity-Relationship (ER) diagram for the E-Commerce d
 
 ```mermaid
 erDiagram
-    users {
+    app_users {
         int id PK
+        string name
         string email UK
-        string hashed_password
+        string password_hash
+        string role
         boolean is_active
         datetime created_at
+    }
+
+    revoked_tokens {
+        string jti PK
+        datetime expires_at
     }
 
     customers {

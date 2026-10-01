@@ -1,4 +1,4 @@
-from .user import User
+from .user import RevokedToken, User
 from .customer import Customer
 from .product import Product
 from .order import Order, OrderItem
@@ -7,6 +7,7 @@ from .review import Review
 
 __all__ = [
     "User",
+    "RevokedToken",
     "Customer",
     "Product",
     "Order",

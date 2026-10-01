@@ -70,6 +70,18 @@ python -m pip install -r requirement.txt
 uvicorn app.main:app --reload
 ```
 
+After registering your first account, you can promote it to admin for local
+testing through a trusted MySQL session. From the repository root, replace
+the example address with your registered email, then run this command in your
+terminal. Enter the MySQL root password when prompted:
+
+```bash
+docker exec -it retainiq_mysql mysql -uroot -p retainiq -e "UPDATE app_users SET role = 'ADMIN' WHERE email = 'your-own-registered-email@example.com';"
+```
+
+This is a local development step; do not expose admin promotion as a public
+endpoint.
+
 #### 3. Frontend Client Setup
 ```bash
 cd client

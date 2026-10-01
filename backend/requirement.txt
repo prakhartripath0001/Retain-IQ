@@ -7,6 +7,12 @@ uvicorn[standard]
 pydantic-settings
 python-dotenv
 
+# ── Authentication & Forms ────────────────────────────────────────────────
+PyJWT>=2.10,<3
+pwdlib[argon2]
+python-multipart
+email-validator
+
 # ── Database ───────────────────────────────────────────────────────────────
 sqlalchemy
 pymysql
@@ -28,3 +34,7 @@ plotly
 
 # ── Machine Learning ───────────────────────────────────────────────────────
 scikit-learn
+xgboost
+joblib
+
+shap

@@ -1,0 +1,12 @@
+feature,customer_value,shap_value,effect
+orders_last_90_days,0.0,0.13312166544882584,Increases churn risk
+total_orders,1.0,-0.07266596115881757,Decreases churn risk
+days_since_last_order,201.0,0.05367650436835522,Increases churn risk
+spending_last_30_days,0.0,-0.031320669922692695,Decreases churn risk
+spending_last_90_days,0.0,-0.028235470255274203,Decreases churn risk
+orders_last_30_days,0.0,0.023676228993662507,Increases churn risk
+total_spending,583.26,-0.021914958890636743,Decreases churn risk
+average_order_value,583.26,-0.012707027670390558,Decreases churn risk
+return_rate,,0.0,Little or no effect
+average_review_score,,0.0,Little or no effect
+discount_usage,,0.0,Little or no effect
