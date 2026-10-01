@@ -1,0 +1,11 @@
+RetainIQ - Exploratory Data Analysis
+
+Registered customers: 50
+Orders with valid amounts: 246
+Revenue across these orders: 129899.02
+Average order value: 528.04
+Customers with orders: 50
+Orders per buying customer: 4.92
+
+Note: revenue includes all statuses until a completed-sale status policy is defined.
+No sales conclusions can be drawn when the orders table is empty.
