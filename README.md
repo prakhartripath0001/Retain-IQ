@@ -95,4 +95,5 @@ This script will validate the CSV schema, clean the records, handle duplicates, 
 ## Documentation
 
 * [Database Schema & ER Diagram](docs/database-schema.md)
+* [Data Pipeline — Cleaning & Ingestion](docs/data-pipeline.md)
 

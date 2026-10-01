@@ -1,0 +1,5 @@
+id,customer_id,status,total_amount,created_at,rejection_reason
+7,1,completed,-10.0,2024-01-16 08:00:00,Invalid total_amount: -10.0 (must be > 0)
+8,2,pending,,2024-01-17 09:00:00,Missing or non-numeric total_amount
+1,1,completed,150.0,2024-01-10 10:00:00,Duplicate order id: 1
+6,99,completed,50.0,2024-01-15 12:00:00,customer_id 99 does not exist in MySQL
