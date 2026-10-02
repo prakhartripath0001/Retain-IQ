@@ -1,10 +1,8 @@
-
 from datetime import timezone
 from typing import Annotated
 
 import jwt
 from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordRequestForm
 
 from app.core.dependencies import CurrentUser, DbSession
 from app.core.security import (
@@ -13,7 +11,7 @@ from app.core.security import (
     decode_access_token,
 )
 from app.models.user import RevokedToken
-from app.schemas.auth import RegisterRequest, TokenResponse, UserResponse
+from app.schemas.auth import LoginRequest, RegisterRequest, TokenResponse, UserResponse
 from app.services.auth import (
     AuthService,
     DuplicateEmailError,
@@ -42,14 +40,11 @@ def register(data: RegisterRequest, db: DbSession):
 
 @router.post("/login", response_model=TokenResponse)
 def login(
-    form: Annotated[OAuth2PasswordRequestForm, Depends()],
+    data: LoginRequest,
     db: DbSession,
 ):
-    # OAuth2 form field "username" contains the user's email.
     try:
-        user = service.authenticate(
-            db, form.username, form.password
-        )
+        user = service.authenticate(db, str(data.email), data.password)
     except (InvalidCredentialsError, InactiveUserError) as exc:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -74,10 +69,14 @@ def get_me(current_user: CurrentUser):
 def logout(
     current_user: CurrentUser,
     db: DbSession,
-    token: Annotated[str, Depends(
-        __import__("fastapi.security", fromlist=["OAuth2PasswordBearer"])
-        .OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
-    )],
+    token: Annotated[
+        str,
+        Depends(
+            __import__("fastapi.security", fromlist=["OAuth2PasswordBearer"]).OAuth2PasswordBearer(
+                tokenUrl="/api/v1/auth/login"
+            )
+        ),
+    ],
 ):
     try:
         payload = decode_access_token(token)

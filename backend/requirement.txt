@@ -1,40 +1,26 @@
-
-# ── Web Framework ──────────────────────────────────────────────────────────
 fastapi
 uvicorn[standard]
-
-# ── Configuration & Environment ────────────────────────────────────────────
 pydantic-settings
 python-dotenv
-
-# ── Authentication & Forms ────────────────────────────────────────────────
 PyJWT>=2.10,<3
 pwdlib[argon2]
 python-multipart
 email-validator
-
-# ── Database ───────────────────────────────────────────────────────────────
 sqlalchemy
 pymysql
 alembic
-
-# ── Data Science & EDA ─────────────────────────────────────────────────────
 pandas
 numpy
 matplotlib
 seaborn
-
-# ── Testing ────────────────────────────────────────────────────────────────
 pytest
 httpx
-
-# ── Dashboard ──────────────────────────────────────────────────────────────
 streamlit
 plotly
-
-# ── Machine Learning ───────────────────────────────────────────────────────
 scikit-learn
 xgboost
 joblib
-
 shap
+pytest
+pytest-cov 
+httpx
