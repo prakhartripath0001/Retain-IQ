@@ -104,7 +104,7 @@ Open **http://localhost:3000** in your browser.
 
 ## Running Pytest Suite
 
-The backend test suite includes 20+ unit and integration tests running against an isolated in-memory SQLite database:
+The backend test suite includes 52+ unit and integration tests across 10 test modules (Auth, Customers, Products, Orders, Payments, Reviews, Analytics, Predictions, Health) running against an isolated in-memory SQLite database:
 
 ```bash
 cd backend
