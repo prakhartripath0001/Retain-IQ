@@ -2,7 +2,7 @@ from datetime import timezone
 from typing import Annotated
 
 import jwt
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 
 from app.core.dependencies import CurrentUser, DbSession
 from app.core.security import (
@@ -11,7 +11,7 @@ from app.core.security import (
     decode_access_token,
 )
 from app.models.user import RevokedToken
-from app.schemas.auth import LoginRequest, RegisterRequest, TokenResponse, UserResponse
+from app.schemas.auth import RegisterRequest, TokenResponse, UserResponse
 from app.services.auth import (
     AuthService,
     DuplicateEmailError,
@@ -39,12 +39,34 @@ def register(data: RegisterRequest, db: DbSession):
 
 
 @router.post("/login", response_model=TokenResponse)
-def login(
-    data: LoginRequest,
+async def login(
+    request: Request,
     db: DbSession,
 ):
+    content_type = request.headers.get("content-type", "")
+    if "application/x-www-form-urlencoded" in content_type or "multipart/form-data" in content_type:
+        form = await request.form()
+        email_or_username = form.get("username") or form.get("email")
+        password = form.get("password")
+    else:
+        try:
+            body = await request.json()
+            email_or_username = body.get("email") or body.get("username")
+            password = body.get("password")
+        except Exception:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Invalid request body",
+            )
+
+    if not email_or_username or not password:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Email/username and password are required",
+        )
+
     try:
-        user = service.authenticate(db, str(data.email), data.password)
+        user = service.authenticate(db, str(email_or_username), str(password))
     except (InvalidCredentialsError, InactiveUserError) as exc:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
