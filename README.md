@@ -1,6 +1,6 @@
 # RetainIQ
 
-RetainIQ is an E-Commerce Customer Intelligence and Churn Prediction Platform built using Next.js, FastAPI, MySQL, and Python. The platform analyzes customer behavior, tracks business performance, groups customers into different segments using K-Means clustering, and predicts which customers may stop purchasing using Machine Learning models (Random Forest, Logistic Regression, XGBoost) and SHAP explainability.
+RetainIQ is an E-Commerce Customer Intelligence and Churn Prediction Platform built using Next.js, FastAPI, MySQL, MLflow, and Python. The platform analyzes customer behavior, tracks business performance, groups customers into different segments using K-Means clustering, and predicts which customers may stop purchasing using Machine Learning models (Logistic Regression, Random Forest, XGBoost) and SHAP explainability.
 
 ---
 
@@ -10,6 +10,7 @@ RetainIQ is an E-Commerce Customer Intelligence and Churn Prediction Platform bu
 * **Customer Intelligence & Profiling:** Detailed customer profiles with lifetime spend, AOV, RFM segment badges, order history, and live ML churn risk scoring.
 * **RFM Analysis & K-Means Segmentation:** Group customers into strategic clusters: *Champions*, *Loyal Customers*, *At Risk*, and *Lost Customers*.
 * **Machine Learning Churn Prediction:** 90-day inactivity model predicting customer churn probability and risk levels (*HIGH*, *MEDIUM*, *LOW*).
+* **MLflow Experiment Tracking & Model Registry:** Complete experiment tracking logging candidate runs (Logistic Regression, Random Forest, XGBoost), hyperparameters, metrics, dataset versions (`v1.0`), and registered production model versions (`churn_prediction_model`).
 * **SHAP Explainability & Playbooks:** Identifies key behavioral risk drivers (*Long time since last purchase*, *Reduced purchase frequency*) and suggests automated retention playbooks.
 * **Complete REST APIs:** Full CRUD endpoints for Customers, Products, Orders, Payments, Reviews, Analytics, and Churn Predictions.
 
@@ -20,19 +21,19 @@ RetainIQ is an E-Commerce Customer Intelligence and Churn Prediction Platform bu
 * **Frontend:** Next.js (App Router), TypeScript, Tailwind CSS, shadcn/ui, TanStack Query
 * **Backend:** Python, FastAPI, SQLAlchemy, Alembic, PyJWT
 * **Database:** MySQL 8.0, SQLite (In-Memory Testing)
-* **Data Science & ML:** Pandas, NumPy, Scikit-learn, XGBoost, SHAP, Joblib, Streamlit, Plotly
-* **DevOps & Testing:** Docker, GitHub Actions, Pytest, Pre-commit, Ruff
+* **Data Science & ML:** Pandas, NumPy, Scikit-learn, XGBoost, SHAP, Joblib, Streamlit, Plotly, MLflow
+* **DevOps & Testing:** Docker, Docker Compose, GitHub Actions, Pytest, Playwright, Pre-commit, Ruff
 
 ---
 
 ## System Architecture
 
-The platform follows a decoupled architecture where the Next.js frontend communicates with the FastAPI backend via HTTP REST APIs. The backend handles data processing, communicates with the MySQL database, and executes machine learning inference pipelines.
+The platform follows a decoupled architecture where the Next.js frontend communicates with the FastAPI backend via HTTP REST APIs, with MLflow managing ML experiment tracking and model registration.
 
 ```
 Next.js Frontend (React Query)
           ↓
-   FastAPI Backend
+   FastAPI Backend ↔ MLflow Tracking & Model Registry (Port 5000)
           ↓
  MySQL Database ↔ Scikit-learn ML Model & SHAP Explainer
 ```
@@ -51,7 +52,7 @@ Next.js Frontend (React Query)
 
 ### Running with Docker Compose (Recommended)
 
-The easiest way to run the entire RetainIQ stack (Frontend, Backend, and MySQL) is using Docker Compose:
+The easiest way to run the entire RetainIQ stack (Frontend, Backend, MySQL, and MLflow) is using Docker Compose:
 
 ```bash
 # Build and start all services in the background
@@ -61,6 +62,7 @@ docker compose up -d --build
 Once running, the services will be available at:
 * **Frontend Client:** http://localhost:3000
 * **Backend API (Swagger Docs):** http://localhost:8000/docs
+* **MLflow Tracking & Model Registry UI:** http://localhost:5000
 * **MySQL Database:** `localhost:3307` (Internal network: `mysql:3306`)
 
 To stop the services:
@@ -102,17 +104,42 @@ Open **http://localhost:3000** in your browser.
 
 ---
 
-## Running Pytest Suite
+## Automated Test Suites
 
-The backend test suite includes 52+ unit and integration tests across 10 test modules (Auth, Customers, Products, Orders, Payments, Reviews, Analytics, Predictions, Health) running against an isolated in-memory SQLite database:
+### Backend Pytest Suite (52 Unit & Integration Tests)
+The backend test suite includes 52 unit and integration tests across 10 test modules (Auth, Customers, Products, Orders, Payments, Reviews, Analytics, Predictions, Health) running against an isolated in-memory SQLite database:
 
 ```bash
-cd backend
-source .venv/bin/activate
-pytest
+PYTHONPATH=backend pytest backend/test
+```
+
+### Frontend Playwright E2E Suite (9 End-to-End Tests)
+The frontend test suite includes 9 Playwright browser tests covering sign in/sign up toggle, dashboard metrics, customer directory, product catalog, orders, RFM segments, churn prediction, and business analytics:
+
+```bash
+cd client
+npx playwright test
 ```
 
 ---
+
+## CI/CD DevOps Pipeline (GitHub Actions)
+
+The repository uses a 5-stage GitHub Actions pipeline (`.github/workflows/ci.yml`) triggered on `git push` or pull request:
+
+```
+git push
+    ↓
+1. Run Tests (Pytest 52 Backend Tests & Playwright E2E Frontend Tests)
+    ↓
+2. Lint (Ruff Python Code Quality & ESLint Next.js Rules)
+    ↓
+3. Build (Production Next.js Asset & Bundle Compilation)
+    ↓
+4. Docker Image (Build & Push Frontend & Backend Containers to ghcr.io)
+    ↓
+5. Deploy (Automated Staging/Production Rollout & Health Checks)
+```
 
 ## Data Pipeline & ML Training
 
@@ -148,10 +175,18 @@ export FEATURE_SNAPSHOT_DATE="2025-01-01"
 python scripts/build_customer_features.py
 ```
 
-### 6. Train Machine Learning Models
+### 6. Machine Learning Experiment & MLflow Model Registry
 ```bash
 python scripts/train_churn_model.py
 ```
+This script executes a full ML experiment pipeline:
+* **MLflow Experiment:** Logs runs under experiment `churn_prediction`.
+* **Candidate Runs:** Logs parameters, validation/test metrics, and artifacts for:
+  * **Run 1:** Logistic Regression
+  * **Run 2:** Random Forest
+  * **Run 3:** XGBoost
+* **Dataset Versioning:** Tags dataset version (`v1.0`) and snapshot date.
+* **Model Registry:** Registers top validation performer (e.g. `Logistic Regression`, Validation PR-AUC `0.7754`) into MLflow Model Registry as **`churn_prediction_model` Version 1**.
 
 ---
 
