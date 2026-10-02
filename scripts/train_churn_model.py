@@ -365,7 +365,7 @@ def main():
             mlflow.log_metrics(metrics)
 
             # Log model artifact to MLflow
-            mlflow.sklearn.log_model(model, artifact_path="model")
+            mlflow.sklearn.log_model(model, name="model", serialization_format="cloudpickle")
             run_ids[name] = run.info.run_id
 
             validation_results.append(
@@ -448,7 +448,7 @@ def main():
             mlflow.set_tag("dataset.version", DATASET_VERSION)
             mlflow.set_tag("snapshot_date", snapshot_date)
 
-            mlflow.sklearn.log_model(selected_model, artifact_path="model")
+            mlflow.sklearn.log_model(selected_model, name="model", serialization_format="cloudpickle")
             model_uri = f"runs:/{prod_run.info.run_id}/model"
 
             reg_model = mlflow.register_model(

@@ -1,6 +1,10 @@
 {
+  "experiment": "churn_prediction",
   "selected_model": "Logistic Regression",
   "selection_metric": "validation_pr_auc",
+  "dataset_version": "v1.0",
+  "model_version": "1",
+  "registered_model_name": "churn_prediction_model",
   "decision_threshold": 0.5,
   "feature_columns": [
     "days_since_last_order",
@@ -21,6 +25,5 @@
   "random_state": 42,
   "training_rows": 24,
   "validation_rows": 9,
-  "test_rows": 9,
-  "note": "Test metrics are for the pre-refit candidate models. Threshold 0.5 is a baseline, not an optimized business threshold."
+  "test_rows": 9
 }

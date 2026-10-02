@@ -1,0 +1,23 @@
+artifact_path: /Users/prakhartripathi/Documents/Retain-IQ/mlruns/1/models/m-e1041ec263c64ad493fbfb2335541e52/artifacts
+flavors:
+  python_function:
+    env:
+      conda: conda.yaml
+      virtualenv: python_env.yaml
+    loader_module: mlflow.sklearn
+    model_path: model.pkl
+    predict_fn: predict
+    python_version: 3.13.15
+  sklearn:
+    code: null
+    pickled_model: model.pkl
+    serialization_format: cloudpickle
+    sklearn_version: 1.9.1
+    skops_trusted_types: null
+mlflow_version: 3.16.1
+model_id: m-e1041ec263c64ad493fbfb2335541e52
+model_size_bytes: 340792
+model_uuid: m-e1041ec263c64ad493fbfb2335541e52
+prompts: null
+run_id: 6a3fe94a61cc453e8e25fb32e1007b69
+utc_time_created: '2026-10-02 05:03:31.892120'
