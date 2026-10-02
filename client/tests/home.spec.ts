@@ -1,7 +1,6 @@
 import { test, expect } from "@playwright/test";
 
-test("homepage loads", async ({ page }) => {
+test("homepage redirects to dashboard", async ({ page }) => {
   await page.goto("/");
-
-  await expect(page).toHaveTitle(/RetainIQ/i);
+  await expect(page).toHaveURL(/.*dashboard/);
 });

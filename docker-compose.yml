@@ -12,37 +12,51 @@ services:
     volumes:
       - mysql_data:/var/lib/mysql
       - ./backend/app/db/schema.sql:/docker-entrypoint-initdb.d/01-auth-schema.sql:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
     restart: unless-stopped
 
-#   api:
-#     build:
-#       context: ./backend
-#       dockerfile: Dockerfile
-#     container_name: retainiq_api
-#     ports:
-#       - "8000:8000"
-#     depends_on:
-#       - mysql
-#     environment:
-#       # Connect using the internal docker network (mysql:3306)
-#       - DATABASE_URL=mysql+pymysql://root:password@mysql:3306/retainiq
-#     volumes:
-#       # Mount local backend dir for hot reloading during development
-#       - ./backend:/app
-#     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
-# 
-#   client:
-#     build:
-#       context: ./client
-#       dockerfile: Dockerfile
-#     container_name: retainiq_client
-#     ports:
-#       - "3000:3000"
-#     volumes:
-#       - ./client:/app
-#       - /app/node_modules
-#     depends_on:
-#       - api
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: retainiq_backend
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=mysql+pymysql://root:password@mysql:3306/retainiq
+      - MLFLOW_TRACKING_URI=http://mlflow:5000
+    depends_on:
+      mysql:
+        condition: service_healthy
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    container_name: retainiq_frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+  mlflow:
+    image: ghcr.io/mlflow/mlflow:v2.10.2
+    container_name: retainiq_mlflow
+    command: mlflow server --host 0.0.0.0 --port 5000 --backend-store-uri sqlite:////mlflow/mlflow.db --default-artifact-root /mlflow/artifacts
+    ports:
+      - "5000:5000"
+    volumes:
+      - mlflow_data:/mlflow
+    restart: unless-stopped
 
 volumes:
   mysql_data:
+  mlflow_data:
