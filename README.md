@@ -1,35 +1,53 @@
 # RetainIQ
 
-RetainIQ is an E-Commerce Customer Intelligence and Churn Prediction Platform built using Next.js, FastAPI, MySQL, and Python. The platform analyzes customer behavior, tracks business performance, groups customers into different segments, and predicts which customers may stop purchasing, enabling businesses to improve customer retention.
+RetainIQ is an E-Commerce Customer Intelligence and Churn Prediction Platform built using Next.js, FastAPI, MySQL, and Python. The platform analyzes customer behavior, tracks business performance, groups customers into different segments using K-Means clustering, and predicts which customers may stop purchasing using Machine Learning models (Random Forest, Logistic Regression, XGBoost) and SHAP explainability.
+
+---
 
 ## Key Features
 
-*   **E-Commerce Analytics:** Analyze business data such as total revenue, customer count, orders, and purchasing trends.
-*   **RFM Analysis:** Understand customer purchasing behavior through Recency, Frequency, and Monetary value calculations.
-*   **Customer Segmentation:** Group customers using K-Means clustering into segments like Champions, Loyal Customers, At Risk, and Lost Customers.
-*   **Customer Churn Prediction:** Estimate the probability that a customer may stop purchasing (defined as no purchase for 90 days) using Machine Learning.
-*   **Model Explainability:** Utilize SHAP to explain which factors contribute to a customer's churn prediction.
-*   **Interactive Dashboard:** View analytics, customer history, and churn risk on a comprehensive dashboard.
+* **Executive Dashboard:** High-level business KPIs (Total Revenue, Customers, Orders, Churn Rate), revenue distribution charts, and customer segment insights.
+* **Customer Intelligence & Profiling:** Detailed customer profiles with lifetime spend, AOV, RFM segment badges, order history, and live ML churn risk scoring.
+* **RFM Analysis & K-Means Segmentation:** Group customers into strategic clusters: *Champions*, *Loyal Customers*, *At Risk*, and *Lost Customers*.
+* **Machine Learning Churn Prediction:** 90-day inactivity model predicting customer churn probability and risk levels (*HIGH*, *MEDIUM*, *LOW*).
+* **SHAP Explainability & Playbooks:** Identifies key behavioral risk drivers (*Long time since last purchase*, *Reduced purchase frequency*) and suggests automated retention playbooks.
+* **Complete REST APIs:** Full CRUD endpoints for Customers, Products, Orders, Payments, Reviews, Analytics, and Churn Predictions.
+
+---
 
 ## Technology Stack
 
-*   **Frontend:** Next.js, TypeScript, Tailwind CSS, shadcn/ui
-*   **Backend:** Python, FastAPI
-*   **Database:** MySQL, SQLAlchemy, Alembic
-*   **Data Science & ML:** Pandas, NumPy, Scikit-learn, XGBoost, SHAP, MLflow
-*   **DevOps & Testing:** Docker, GitHub Actions, Pytest, Playwright
+* **Frontend:** Next.js (App Router), TypeScript, Tailwind CSS, shadcn/ui, TanStack Query
+* **Backend:** Python, FastAPI, SQLAlchemy, Alembic, PyJWT
+* **Database:** MySQL 8.0, SQLite (In-Memory Testing)
+* **Data Science & ML:** Pandas, NumPy, Scikit-learn, XGBoost, SHAP, Joblib, Streamlit, Plotly
+* **DevOps & Testing:** Docker, GitHub Actions, Pytest, Pre-commit, Ruff
+
+---
 
 ## System Architecture
 
-The platform follows a decoupled architecture where the Next.js frontend communicates with the FastAPI backend via HTTP REST APIs. The backend handles data processing, communicates with the MySQL database, and runs machine learning models for predictions. SHAP explanations are generated alongside predictions and delivered to the frontend for transparent insights.
+The platform follows a decoupled architecture where the Next.js frontend communicates with the FastAPI backend via HTTP REST APIs. The backend handles data processing, communicates with the MySQL database, and executes machine learning inference pipelines.
+
+```
+Next.js Frontend (React Query)
+          ↓
+   FastAPI Backend
+          ↓
+ MySQL Database ↔ Scikit-learn ML Model & SHAP Explainer
+```
+
+---
 
 ## Getting Started
 
 ### Prerequisites
 
-*   Docker and Docker Compose
-*   Node.js (for local client development)
-*   Python 3.11+ (for local backend development)
+* Docker and Docker Compose
+* Node.js 18+ (for local frontend development)
+* Python 3.11+ (for local backend development)
+
+---
 
 ### Running with Docker Compose (Recommended)
 
@@ -41,21 +59,20 @@ docker compose up -d --build
 ```
 
 Once running, the services will be available at:
-*   **Frontend Client:** http://localhost:3000
-*   **Backend API (Swagger Docs):** http://localhost:8000/docs
-*   **MySQL Database:** `localhost:3307` (Internal network: `mysql:3306`)
+* **Frontend Client:** http://localhost:3000
+* **Backend API (Swagger Docs):** http://localhost:8000/docs
+* **MySQL Database:** `localhost:3307` (Internal network: `mysql:3306`)
 
 To stop the services:
 ```bash
 docker compose down
 ```
 
+---
+
 ### Local Development Setup
 
-If you prefer to run the services individually on your host machine or need to install dependencies for your IDE:
-
 #### 1. Setup Pre-commit Hooks (Required)
-We use `pre-commit` to enforce code quality (like Ruff linting) before each commit.
 ```bash
 pip install pre-commit
 pre-commit install
@@ -70,17 +87,10 @@ python -m pip install -r requirement.txt
 uvicorn app.main:app --reload
 ```
 
-After registering your first account, you can promote it to admin for local
-testing through a trusted MySQL session. From the repository root, replace
-the example address with your registered email, then run this command in your
-terminal. Enter the MySQL root password when prompted:
-
+#### Promote Account to Admin (Local Dev)
 ```bash
-docker exec -it retainiq_mysql mysql -uroot -p retainiq -e "UPDATE app_users SET role = 'ADMIN' WHERE email = 'your-own-registered-email@example.com';"
+docker exec -it retainiq_mysql mysql -uroot -p retainiq -e "UPDATE app_users SET role = 'ADMIN' WHERE email = 'your-email@example.com';"
 ```
-
-This is a local development step; do not expose admin promotion as a public
-endpoint.
 
 #### 3. Frontend Client Setup
 ```bash
@@ -88,53 +98,83 @@ cd client
 npm install
 npm run dev
 ```
+Open **http://localhost:3000** in your browser.
 
-### Data Ingestion
+---
 
-To load sample data into your MySQL database (with built-in validation and cleaning), use the provided data ingestion pipeline:
+## Running Pytest Suite
 
-1. Ensure your MySQL database is running and the schema is applied.
-2. Ensure your raw CSV files (e.g., `customers.csv`) are located in `data/raw/`.
-3. Activate the backend virtual environment and run the script from the project root:
+The backend test suite includes 20+ unit and integration tests running against an isolated in-memory SQLite database:
 
+```bash
+cd backend
+source .venv/bin/activate
+pytest
+```
+
+---
+
+## Data Pipeline & ML Training
+
+### 1. Data Ingestion
 ```bash
 source backend/.venv/bin/activate
 python scripts/load_data.py
 ```
 
-This script will validate the CSV schema, clean the records, handle duplicates, upload valid records to MySQL, and output any rejected rows to `data/processed/` for auditing.
-
-### Data Science Pipeline
-
-After data is loaded into MySQL, run the full data science pipeline from the project root:
-
+### 2. Seed Realistic Sample Data
 ```bash
-source backend/.venv/bin/activate
-
-# Seed realistic sample data (optional — resets all tables)
 python scripts/seed_sample_data.py
+```
 
-# Exploratory Data Analysis — generates charts and CSV reports in reports/eda/
+### 3. Exploratory Data Analysis (EDA)
+```bash
 python scripts/eda.py
+```
 
-# RFM Analysis — scores each customer on Recency, Frequency, Monetary
+### 4. RFM Analysis & Segmentation
+```bash
 python scripts/rfm_analysis.py
-
-# Customer Segmentation — K-Means clustering, outputs to reports/segmentation/
 python scripts/segment_customers.py
+```
 
-# Launch the interactive segmentation dashboard
-streamlit run dashboard/app.py
-
-# Churn Label Generation — define observation date and generate ML target labels
+### 5. Churn Label & Feature Generation
+```bash
 export CHURN_SNAPSHOT_DATE="2025-01-01"
 export CHURN_DATA_THROUGH_DATE="2025-04-01"
 python scripts/generate_churn_labels.py
+
+export FEATURE_SNAPSHOT_DATE="2025-01-01"
+python scripts/build_customer_features.py
 ```
 
-The dashboard will open at `http://localhost:8501`.
+### 6. Train Machine Learning Models
+```bash
+python scripts/train_churn_model.py
+```
 
-The churn labels will be saved to `reports/churn/churn_labels.csv`.
+---
+
+## REST API Endpoints Overview
+
+| Category | Method | Endpoint | Description |
+|---|---|---|---|
+| **Predictions** | `POST` | `/api/v1/predictions/churn/{customer_id}` | Live ML churn probability & risk drivers |
+| **Analytics** | `GET` | `/api/v1/analytics/overview` | Executive KPI metrics summary |
+| | `GET` | `/api/v1/analytics/revenue` | Monthly revenue trends & AOV |
+| | `GET` | `/api/v1/analytics/customers` | Customer purchase frequency & avg spend |
+| | `GET` | `/api/v1/analytics/segments` | Cluster profiles & segment counts |
+| | `GET` | `/api/v1/analytics/churn` | Churn rate & eligible customer metrics |
+| **Auth** | `POST` | `/api/v1/auth/register` | Register new user account |
+| | `POST` | `/api/v1/auth/login` | Login and obtain JWT token |
+| | `GET` | `/api/v1/auth/me` | Fetch current user profile |
+| **Customers** | `GET`/`POST`/`PUT`/`DELETE` | `/api/v1/customers` | Full customer CRUD operations |
+| **Products** | `GET`/`POST`/`PUT`/`DELETE` | `/api/v1/products` | Full product inventory CRUD |
+| **Orders** | `GET`/`POST`/`PUT`/`DELETE` | `/api/v1/orders` | Order processing & line items CRUD |
+| **Payments** | `GET`/`POST`/`PUT`/`DELETE` | `/api/v1/payments` | Payment transaction CRUD |
+| **Reviews** | `GET`/`POST`/`PUT`/`DELETE` | `/api/v1/reviews` | Product review rating CRUD |
+
+---
 
 ## Documentation
 
