@@ -1,6 +1,6 @@
-
 from pathlib import Path
 import json
+import os
 import sys
 
 import joblib
@@ -23,6 +23,9 @@ from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 
+import mlflow
+import mlflow.sklearn
+
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 FEATURE_FILE = PROJECT_ROOT / "reports" / "features" / "customer_features.csv"
 LABEL_FILE = PROJECT_ROOT / "reports" / "churn" / "churn_labels.csv"
@@ -35,6 +38,9 @@ CONFUSION_FILE = OUTPUT_DIR / "confusion_matrices.json"
 METADATA_FILE = OUTPUT_DIR / "model_metadata.json"
 
 RANDOM_STATE = 42
+DATASET_VERSION = "v1.0"
+EXPERIMENT_NAME = "churn_prediction"
+REGISTERED_MODEL_NAME = "churn_prediction_model"
 
 FEATURE_COLUMNS = [
     "days_since_last_order",
@@ -111,7 +117,6 @@ def load_training_data():
     if not data["churn"].isin([0, 1]).all():
         raise ValueError("The churn target must contain only 0 and 1.")
 
-
     for column in FEATURE_COLUMNS:
         data[column] = pd.to_numeric(data[column], errors="coerce")
 
@@ -182,9 +187,19 @@ def make_models():
 
 
 def main():
+    # Setup MLflow tracking
+    tracking_uri = os.getenv("MLFLOW_TRACKING_URI", "sqlite:///mlflow.db")
+    mlflow.set_tracking_uri(tracking_uri)
+    mlflow.set_experiment(EXPERIMENT_NAME)
+
+    print(f"MLflow Tracking URI: {tracking_uri}")
+    print(f"MLflow Experiment: {EXPERIMENT_NAME}")
+
     data = load_training_data()
 
     class_counts = data["churn"].value_counts()
+    snapshot_date = str(data["snapshot_date"].iloc[0])
+
     print("Joined training rows:", len(data))
     print("Target counts (0 = not churned, 1 = churned):")
     print(class_counts.sort_index().to_string())
@@ -198,8 +213,7 @@ def main():
     if class_counts.min() < 5:
         raise ValueError(
             "At least 5 examples of each class are needed for this "
-            "train/validation/test split. More labeled customer snapshots "
-            "are recommended."
+            "train/validation/test split."
         )
 
     X = data[FEATURE_COLUMNS].copy()
@@ -267,27 +281,110 @@ def main():
 
     validation_results = []
     fitted_models = {}
+    run_ids = {}
 
+    # Track individual candidate runs in MLflow
     for name, model in models.items():
-        print(f"\nTraining {name}...")
-        model.fit(X_train, y_train)
-        fitted_models[name] = model
+        print(f"\n--------------------------------------------------")
+        print(f"Training and Logging Candidate Run: {name}")
+        print(f"--------------------------------------------------")
 
-        probabilities = model.predict_proba(X_val)[:, 1]
-        pr_auc = average_precision_score(y_val, probabilities)
+        with mlflow.start_run(run_name=name) as run:
+            # Set tags: Experiment, Model, Dataset Version
+            mlflow.set_tag("experiment", EXPERIMENT_NAME)
+            mlflow.set_tag("model_name", name)
+            mlflow.set_tag("dataset.version", DATASET_VERSION)
+            mlflow.set_tag("snapshot_date", snapshot_date)
 
-        validation_results.append(
-            {"model": name, "validation_pr_auc": pr_auc}
-        )
-        print(f"Validation PR-AUC: {pr_auc:.4f}")
+            # Log Hyperparameters
+            model_step = model.named_steps["model"]
+            if name == "Logistic Regression":
+                params = {
+                    "model_type": "LogisticRegression",
+                    "max_iter": model_step.max_iter,
+                    "class_weight": str(model_step.class_weight),
+                    "random_state": RANDOM_STATE,
+                }
+            elif name == "Random Forest":
+                params = {
+                    "model_type": "RandomForestClassifier",
+                    "n_estimators": model_step.n_estimators,
+                    "min_samples_leaf": model_step.min_samples_leaf,
+                    "class_weight": str(model_step.class_weight),
+                    "random_state": RANDOM_STATE,
+                }
+            elif name == "XGBoost":
+                params = {
+                    "model_type": "XGBClassifier",
+                    "n_estimators": model_step.n_estimators,
+                    "max_depth": model_step.max_depth,
+                    "learning_rate": model_step.learning_rate,
+                    "subsample": model_step.subsample,
+                    "colsample_bytree": model_step.colsample_bytree,
+                    "scale_pos_weight": float(model_step.scale_pos_weight),
+                    "random_state": RANDOM_STATE,
+                }
+            else:
+                params = {"model_type": name}
 
+            mlflow.log_params(params)
+
+            # Fit candidate model
+            model.fit(X_train, y_train)
+            fitted_models[name] = model
+
+            # Validation metrics
+            val_probs = model.predict_proba(X_val)[:, 1]
+            val_pr_auc = average_precision_score(y_val, val_probs)
+
+            # Test metrics
+            test_probs = model.predict_proba(X_test)[:, 1]
+            test_preds = (test_probs >= 0.5).astype(int)
+            tn, fp, fn, tp = confusion_matrix(
+                y_test, test_preds, labels=[0, 1]
+            ).ravel()
+
+            test_prec = precision_score(y_test, test_preds, zero_division=0)
+            test_rec = recall_score(y_test, test_preds, zero_division=0)
+            test_f1 = f1_score(y_test, test_preds, zero_division=0)
+            test_roc_auc = roc_auc_score(y_test, test_probs)
+            test_pr_auc = average_precision_score(y_test, test_probs)
+
+            metrics = {
+                "validation_pr_auc": val_pr_auc,
+                "test_precision": test_prec,
+                "test_recall": test_rec,
+                "test_f1": test_f1,
+                "test_roc_auc": test_roc_auc,
+                "test_pr_auc": test_pr_auc,
+                "true_negative": int(tn),
+                "false_positive": int(fp),
+                "false_negative": int(fn),
+                "true_positive": int(tp),
+            }
+            mlflow.log_metrics(metrics)
+
+            # Log model artifact to MLflow
+            mlflow.sklearn.log_model(model, artifact_path="model")
+            run_ids[name] = run.info.run_id
+
+            validation_results.append(
+                {"model": name, "validation_pr_auc": val_pr_auc, "run_id": run.info.run_id}
+            )
+            print(f"Logged MLflow Run ID: {run.info.run_id}")
+            print(f"Validation PR-AUC: {val_pr_auc:.4f}")
+
+    # Select best model candidate
     validation_df = pd.DataFrame(validation_results).sort_values(
         "validation_pr_auc", ascending=False
     )
     selected_name = validation_df.iloc[0]["model"]
+    selected_run_id = validation_df.iloc[0]["run_id"]
     selected_model = fitted_models[selected_name]
 
-    print(f"\nSelected by validation PR-AUC: {selected_name}")
+    print(f"\n==================================================")
+    print(f"Selected Candidate Model: {selected_name} (Run ID: {selected_run_id})")
+    print(f"==================================================")
 
     metric_rows = []
     confusion_data = {}
@@ -337,25 +434,50 @@ def main():
     with open(CONFUSION_FILE, "w", encoding="utf-8") as file:
         json.dump(confusion_data, file, indent=2)
 
+    # Refit winning model on full train + validation set
     selected_model.fit(X_train_val, y_train_val)
     joblib.dump(selected_model, MODEL_FILE)
 
+    # Register Selected Model in MLflow Model Registry
+    model_version = "1"
+    try:
+        with mlflow.start_run(run_name=f"Production_{selected_name}") as prod_run:
+            mlflow.set_tag("status", "production")
+            mlflow.set_tag("experiment", EXPERIMENT_NAME)
+            mlflow.set_tag("selected_model", selected_name)
+            mlflow.set_tag("dataset.version", DATASET_VERSION)
+            mlflow.set_tag("snapshot_date", snapshot_date)
+
+            mlflow.sklearn.log_model(selected_model, artifact_path="model")
+            model_uri = f"runs:/{prod_run.info.run_id}/model"
+
+            reg_model = mlflow.register_model(
+                model_uri=model_uri,
+                name=REGISTERED_MODEL_NAME,
+            )
+            model_version = str(reg_model.version)
+            print(f"\nSuccessfully Registered Production Model:")
+            print(f"  Name: {REGISTERED_MODEL_NAME}")
+            print(f"  Version: {model_version}")
+    except Exception as err:
+        print(f"\nMLflow Model Registry Info: {err}")
+
     metadata = {
+        "experiment": EXPERIMENT_NAME,
         "selected_model": selected_name,
         "selection_metric": "validation_pr_auc",
+        "dataset_version": DATASET_VERSION,
+        "model_version": model_version,
+        "registered_model_name": REGISTERED_MODEL_NAME,
         "decision_threshold": 0.5,
         "feature_columns": FEATURE_COLUMNS,
         "target": "churn",
         "target_definition": "No qualifying purchase in next 90 days",
-        "snapshot_date": str(data["snapshot_date"].iloc[0]),
+        "snapshot_date": snapshot_date,
         "random_state": RANDOM_STATE,
         "training_rows": int(len(X_train)),
         "validation_rows": int(len(X_val)),
         "test_rows": int(len(X_test)),
-        "note": (
-            "Test metrics are for the pre-refit candidate models. "
-            "Threshold 0.5 is a baseline, not an optimized business threshold."
-        ),
     }
 
     with open(METADATA_FILE, "w", encoding="utf-8") as file:
